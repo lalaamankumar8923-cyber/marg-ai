@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marg.ai - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* ==== Premium Soft Peach Theme ==== */
+        body { font-family: 'Outfit', sans-serif; background: #fdf6f5; margin: 0; display: flex; min-height: 100vh; color: #2d3436; }
+        
+        /* ==== Sidebar ==== */
+        .sidebar { width: 250px; background: #fff5f6; padding: 40px 20px; border-right: 1px solid #ffe4e8; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; box-sizing: border-box; }
+        .sidebar h1 { font-size: 38px; font-weight: 800; margin: 0 0 40px 10px; letter-spacing: -1px; color: #8c1c3f; }
+        .nav-item { padding: 12px 15px; margin-bottom: 10px; color: #2f3542; font-weight: 600; font-size: 16px; cursor: pointer; border-radius: 10px; transition: all 0.3s ease; }
+        .nav-item:hover, .nav-item.active { background: rgba(255, 255, 255, 0.7); box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #ff4757; }
+        .logout-btn { margin-top: auto; color: #d63031; padding: 12px 15px; font-weight: 800; cursor: pointer; border-radius: 10px; display: flex; align-items: center; gap: 8px; background: rgba(214, 48, 49, 0.05); }
+
+        /* ==== Main Content ==== */
+        .main-content { flex: 1; padding: 50px 60px; overflow-x: hidden; }
+        .header h1 { font-size: 46px; font-weight: 800; margin: 0 0 5px 0; letter-spacing: -1px; }
+        .header h1 span { background: linear-gradient(135deg, #ff4757, #ff7f50); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header p { font-size: 18px; color: #57606f; margin-bottom: 40px; }
+
+        /* ==== Search Box ==== */
+        .search-container { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); padding: 20px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 1); display: flex; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 50px; }
+        .search-container input { flex: 1; padding: 18px 25px; border: none; border-radius: 12px; font-size: 18px; font-family: 'Outfit', sans-serif; background: rgba(255, 255, 255, 1); outline: none; color: #2f3542; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); }
+        .generate-btn { background: #1e272e; color: white; border: none; padding: 0 35px; border-radius: 12px; font-size: 18px; font-family: 'Outfit', sans-serif; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .generate-btn:hover { background: #2d3436; transform: translateY(-2px); }
+
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; }
+        .glass-card { background: rgba(255, 255, 255, 0.6); padding: 30px; border-radius: 20px; border: 1px solid white; cursor: pointer; transition: 0.3s; }
+        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-color: #ffb8b8; }
+
+        /* ==== STEP 2: Pre-Test Assessment Modal CSS ==== */
+        .assessment-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(10px); z-index: 2000; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease; }
+        .assessment-overlay.active { opacity: 1; display: flex; }
+        .assessment-card { background: white; padding: 40px; border-radius: 24px; width: 480px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); text-align: center; position: relative; transform: translateY(30px); transition: transform 0.3s ease; }
+        .assessment-overlay.active .assessment-card { transform: translateY(0); }
+        .option-btn { display: block; width: 100%; padding: 18px 20px; margin-bottom: 15px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 15px; font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 600; color: #1e293b; cursor: pointer; transition: 0.3s; text-align: left; }
+        .option-btn:hover { background: #fff5f6; border-color: #ff6b81; color: #8c1c3f; transform: translateX(5px); box-shadow: 0 5px 15px rgba(255, 107, 129, 0.1); }
+        
+        .roadmap-wrapper { background: #ffffff; border-radius: 20px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); position: relative; margin-top: 20px; min-height: 500px; }
+        .milestone-widget { position: absolute; top: 25px; right: 30px; background: white; border-radius: 12px; padding: 15px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 15px; font-weight: 600; border: 1px solid #f0f0f0; font-size: 14px; }
+
+        .floating-tooltip { background: white; border: 1px solid #f1f5f9; border-radius: 16px; padding: 20px; width: 100%; box-shadow: 0 12px 35px rgba(0,0,0,0.06); text-align: left; }
+        .floating-tooltip h4 { margin: 5px 0 10px 0; color: #1e293b; font-size: 18px; font-weight: 800; }
+        .tooltip-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-dark { background: #1e272e; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Outfit'; transition: 0.3s;}
+        .btn-dark:hover { transform: translateY(-2px); }
+        .btn-light { background: #f1f5f9; color: #1e272e; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Outfit'; transition: 0.3s;}
+        .btn-light:hover { background: #e2e8f0; }
+
+        /* ==== Popup Modal CSS ==== */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); z-index: 1000; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease; }
+        .modal-content { background: white; padding: 35px; border-radius: 20px; width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); position: relative; transform: translateY(30px); transition: transform 0.3s ease; }
+        .modal-overlay.active { opacity: 1; display: flex; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .close-btn { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 18px; color: #94a3b8; transition: 0.2s; }
+        .close-btn:hover { color: #e11d48; transform: scale(1.1); }
+        .resource-link { display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-decoration: none; color: #1e293b; font-weight: 600; margin-bottom: 12px; transition: 0.3s; }
+        .resource-link:hover { background: #fff; border-color: #ff6b81; box-shadow: 0 5px 15px rgba(255, 107, 129, 0.15); transform: translateX(5px); }
+
+        /* ==== Vertical Curved Snake Roadmap CSS ==== */
+        .snake-container-vertical { position: relative; width: 100%; display: flex; flex-direction: column; gap: 50px; padding: 40px 0; max-width: 800px; margin: 0 auto; }
+        .snake-track-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        
+        .station-card-vertical { position: relative; z-index: 2; width: 42%; background: white; border-radius: 16px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 2px solid #f1f5f9; transition: transform 0.3s; }
+        .station-card-vertical:hover { transform: translateY(-5px); }
+        
+        /* Zig-Zag Alignment */
+        .station-card-vertical:nth-child(odd) { align-self: flex-start; }
+        .station-card-vertical:nth-child(even) { align-self: flex-end; }
+        
+        /* Nodes (Gole) jo line par aayenge */
+        .big-node-vert { width: 28px; height: 28px; border-radius: 50%; background: white; border: 6px solid #e2e8f0; position: absolute; top: 50%; transform: translateY(-50%); z-index: 3; transition: all 0.3s ease; }
+        .station-card-vertical:nth-child(odd) .big-node-vert { right: -13.5%; }
+        .station-card-vertical:nth-child(even) .big-node-vert { left: -13.5%; }
+        
+        /* Status Colors */
+        .station-card-vertical[data-status="completed"] { border-color: #22c55e; }
+        .station-card-vertical[data-status="inprogress"] { border-color: #ff9f43; }
+        .station-card-vertical[data-status="completed"] .big-node-vert { border-color: #22c55e; background: #dcfce7; box-shadow: 0 0 15px rgba(34,197,94,0.4); }
+        .station-card-vertical[data-status="inprogress"] .big-node-vert { border-color: #ff9f43; background: #ffedd5; box-shadow: 0 0 15px rgba(255,159,67,0.4); }
+
+        /* Flower Sparkle Effect */
+        .flower-sparkle { position: fixed; pointer-events: none; width: 20px; height: 20px; background: radial-gradient(circle, #ff6b81, #ff9f43); border-radius: 50% 0 50% 0; z-index: 9999; animation: sparkleAnim 1s ease-out forwards; }
+        @keyframes sparkleAnim {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0) rotate(180deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar with Tab Switching Logic -->
+    <div class="sidebar">
+        <h1>Marg.ai</h1>
+        <div class="nav-item active" id="tab-dashboard" onclick="switchTab('dashboard')">🎛️ Dashboard</div>
+        <div class="nav-item" id="tab-myRoadmaps" onclick="switchTab('myRoadmaps')">🗺️ My Roadmaps</div>
+        <div class="nav-item" id="tab-hackathons" onclick="switchTab('hackathons')">🏆 Live Hackathons</div>
+        <div class="nav-item">⚙️ Settings</div>
+        <div class="logout-btn" onclick="logout()">🚪 Logout</div>
+    </div>
+
+    <div class="main-content">
+        <!-- Dashboard View (Home) -->
+        <div id="dashboardView">
+            <div class="header">
+                <h1 id="greetingText">Welcome, <span id="userName">Aman</span></h1>
+                <p>Tell us what you want to become, and we'll map out your journey.</p>
+            </div>
+            <div class="search-container">
+                <input type="text" id="goal-input" placeholder="e.g., Software Engineer...">
+                <button id="generateBtn" class="generate-btn" onclick="triggerPreTest(event)">Generate Roadmap</button>
+            </div>
+            <div class="card-grid">
+                <div class="glass-card"><h4>C++ Fundamentals</h4><p>Master core logic.</p></div>
+                <div class="glass-card"><h4>Full-Stack Web Dev</h4><p>Build API integrations.</p></div>
+            </div>
+        </div>
+
+        <!-- My Roadmaps View (History) -->
+        <div id="myRoadmapsView" style="display: none;">
+            <div class="header">
+                <h1>My <span>Roadmaps</span></h1>
+                <p>Pick up right where you left off. Your AI generated journeys.</p>
+            </div>
+            <div id="savedRoadmapsGrid" class="card-grid">
+                <!-- Saved roadmaps will be injected here via JS -->
+            </div>
+        </div>
+
+        <!-- Live Hackathons View -->
+        <div id="hackathonsView" style="display: none;">
+            <div class="header">
+                <h1>Live <span>Hackathons Hub</span></h1>
+                <p>Compete, build groundbreaking projects, and win exciting prizes in top global events.</p>
+            </div>
+            <!-- JS will inject dynamic timer cards here -->
+            <div id="hackathonGrid" class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
+            </div>
+        </div>
+
+        <!-- Roadmap Metro Map UI -->
+        <div id="roadmapScreen" style="display: none;"></div>
+    </div>
+
+    <!-- Pre-Test Modal -->
+    <div id="assessmentModal" class="assessment-overlay">
+        <div class="assessment-card">
+            <span class="close-test-btn" onclick="closePreTest()">✖</span>
+            <h3 style="color: #8c1c3f; font-size: 26px; margin-top: 0;">Quick Skill Check 🧠</h3>
+            <p style="color: #64748b; margin-bottom: 30px; font-size: 16px;">To build your perfect <span id="assessmentGoalText" style="font-weight: 800; color: #ff6b81;"></span> roadmap, tell us your current level:</p>
+            
+            <button class="option-btn" onclick="submitAssessment('Beginner')">🌱 <b>Absolute Beginner:</b> Start from scratch</button>
+            <button class="option-btn" onclick="submitAssessment('Intermediate')">⚙️ <b>Know Basics:</b> Familiar with Loops, Switch Statements</button>
+            <button class="option-btn" onclick="submitAssessment('Advanced')">🚀 <b>Advanced:</b> Ready for Complex Data Structures & Projects</button>
+        </div>
+    </div>
+
+    <!-- Resource Hub Modal -->
+    <div id="resourceModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">✖</span>
+            <h3 id="modalTitle" style="margin-top: 0; color: #8c1c3f; font-size: 22px;">Resource Title</h3>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 25px;">Top curated free resources to master this station.</p>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // Setup User Name
+        window.onload = function() {
+            let rawName = localStorage.getItem('margUserName') || "aMaN"; 
+            let firstName = rawName.split(' ')[0].trim().toLowerCase();
+            document.getElementById('userName').innerText = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+        };
+
+        function logout() {
+            localStorage.removeItem('margUserName');
+            localStorage.removeItem('margUserEmail');
+            window.location.href = "index.html";
+        }
+
+        // ==== Tab Switching Logic ====
+        function switchTab(tabName) {
+            document.getElementById('dashboardView').style.display = 'none';
+            document.getElementById('myRoadmapsView').style.display = 'none';
+            document.getElementById('hackathonsView').style.display = 'none';
+            document.getElementById('roadmapScreen').style.display = 'none';
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            if(tabName === 'dashboard') {
+                document.getElementById('dashboardView').style.display = 'block';
+                document.getElementById('tab-dashboard').classList.add('active');
+            } else if(tabName === 'myRoadmaps') {
+                document.getElementById('myRoadmapsView').style.display = 'block';
+                document.getElementById('tab-myRoadmaps').classList.add('active');
+                renderSavedRoadmaps(); 
+            } else if(tabName === 'hackathons') {
+                document.getElementById('hackathonsView').style.display = 'block';
+                document.getElementById('tab-hackathons').classList.add('active');
+                renderHackathons(); // <-- Dynamic render call for timers
+            }
+        }
+
+        // ==== MongoDB / LocalStorage se Data Fetch karna ====
+        async function renderSavedRoadmaps() {
+            const savedGrid = document.getElementById('savedRoadmapsGrid');
+            let savedHistory = JSON.parse(localStorage.getItem('margSavedRoadmaps')) || [];
+            
+            savedGrid.innerHTML = '';
+            if(savedHistory.length === 0) {
+                savedGrid.innerHTML = `<p style="color: #64748b;">No roadmaps found. Go to Dashboard and Generate one!</p>`;
+                return;
+            }
+
+            savedHistory.forEach((roadmapObj, index) => {
+                savedGrid.innerHTML += `
+                    <div class="glass-card" onclick='loadSpecificMap(${index})' style="border-left: 5px solid #ff6b81;">
+                        <span style="font-size: 12px; color: #94a3b8;">${roadmapObj.date}</span>
+                        <h4 style="margin-top: 5px; font-size: 22px; color: #1e293b;">${roadmapObj.goal}</h4>
+                        <p style="color: #ff9f43; font-weight: 600; font-size: 14px;">Level: ${roadmapObj.level}</p>
+                        <button class="btn-dark" style="margin-top: 10px; width: 100%;">View Roadmap 🚀</button>
+                    </div>
+                `;
+            });
+        }
+
+        // Jab user 'View Roadmap' par click karega
+        function loadSpecificMap(index) {
+            let savedRoadmaps = JSON.parse(localStorage.getItem('margSavedRoadmaps')) || [];
+            let targetMap = savedRoadmaps[index];
+            
+            document.getElementById('myRoadmapsView').style.display = 'none';
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            buildMetroMapUI(targetMap.goal, targetMap.level, targetMap.roadmapData);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function loadMapDirectly(roadmapObj) {
+            const savedContainer = document.getElementById('savedRoadmapsGrid').parentElement;
+            if(savedContainer) savedContainer.style.display = 'none';
+            buildMetroMapUI(roadmapObj.goal, roadmapObj.level, roadmapObj.roadmapData);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ==== Pre-Test & Modals ====
+        function triggerPreTest(event) {
+            if(event) event.preventDefault();
+            const goal = document.getElementById('goal-input').value; 
+            if(!goal) { alert("Please enter a goal!"); return; }
+            document.getElementById('assessmentGoalText').innerText = goal.charAt(0).toUpperCase() + goal.slice(1);
+            
+            const testModal = document.getElementById('assessmentModal');
+            testModal.style.display = 'flex';
+            setTimeout(() => testModal.classList.add('active'), 10);
+        }
+
+        function closePreTest() {
+            const testModal = document.getElementById('assessmentModal');
+            testModal.classList.remove('active');
+            setTimeout(() => testModal.style.display = 'none', 300);
+        }
+
+        function openModal(title, searchQuery) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerHTML = `
+                <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery + ' tutorial step by step')}" target="_blank" class="resource-link">
+                    <span style="font-size: 24px; color: #ff0000;">▶</span> Watch YouTube Tutorials
+                </a>
+                <a href="https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' free study roadmap')}" target="_blank" class="resource-link">
+                    <span style="font-size: 24px;">🌐</span> Read Articles & Courses
+                </a>
+            `;
+            const modal = document.getElementById('resourceModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('resourceModal');
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
+        }
+
+        function downloadRoadmapPDF() {
+            const element = document.getElementById('roadmapScreen');
+            const button = element.querySelector('#pdfBtn');
+            if(button) button.style.display = 'none';
+            const opt = {
+                margin: 0.5, filename: 'Marg_ai_Career_Roadmap.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a3', orientation: 'landscape' }
+            };
+            html2pdf().set(opt).from(element).save().then(() => { if(button) button.style.display = 'block'; });
+        }
+
+        // ==== Roadmap Generation API ====
+        async function submitAssessment(userLevel) {
+            closePreTest();
+            const btn = document.getElementById('generateBtn'); 
+            const goal = document.getElementById('goal-input').value; 
+            btn.innerHTML = "⏳ Generating AI Metro...";
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/generate-roadmap', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ goal: goal, level: userLevel }) 
+                });
+                const data = await response.json();
+                const finalTitle = data.shortTitle || goal;
+
+                // LOCAL STORAGE MEIN SAVE KARNA (History immediately kaam karegi)
+                let savedHistory = JSON.parse(localStorage.getItem('margSavedRoadmaps')) || [];
+                savedHistory.unshift({
+                    goal: finalTitle,
+                    level: userLevel,
+                    date: new Date().toLocaleDateString(),
+                    roadmapData: data.roadmap
+                });
+                localStorage.setItem('margSavedRoadmaps', JSON.stringify(savedHistory));
+
+                document.getElementById('dashboardView').style.display = 'none'; 
+                buildMetroMapUI(finalTitle, userLevel, data.roadmap);
+
+            } catch (error) {
+                console.error(error); alert("Error generating roadmap. Backend check karein!");
+            } finally {
+                btn.innerHTML = "Generate Roadmap";
+            }
+        }
+
+        // ==== Vertical Curved Snake Roadmap UI Builder ====
+        function buildMetroMapUI(formattedGoal, userLevel, roadmapArray) {
+            const roadmapUI = document.getElementById('roadmapScreen');
+            roadmapUI.style.display = 'block';
+            roadmapUI.className = 'roadmap-wrapper';
+            const totalStations = roadmapArray.length;
+
+            roadmapUI.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="font-size: 28px; font-weight: 800; color: #1e293b;">
+                        Metro Map: <span style="color: #ff6b81;">${formattedGoal}</span> 
+                    </h2>
+                    <div style="display: flex; gap: 15px;">
+                        <div style="background: #f8fafc; padding: 10px 20px; border-radius: 12px; font-weight: bold; color: #1e293b;">
+                            Milestone: <span id="milestoneCounter">0</span> of ${totalStations} Completed
+                        </div>
+                        <button id="pdfBtn" onclick="downloadRoadmapPDF()" style="background: #8c1c3f; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-family: 'Outfit'; font-weight: 600; cursor: pointer;">📥 PDF</button>
+                    </div>
+                </div>
+
+                <div class="snake-container-vertical" id="metroMapContainer">
+                    <svg class="snake-track-svg" viewBox="0 0 800 1200" preserveAspectRatio="none">
+                        <path d="M 400,0 C 600,200 200,400 400,600 C 600,800 200,1000 400,1200" fill="none" stroke="#e2e8f0" stroke-width="8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+            `;
+            
+            const mapContainer = document.getElementById('metroMapContainer');
+            
+            roadmapArray.forEach((step, index) => {
+                let status = index === 0 ? "inprogress" : "locked";
+                let btnText = "Mark Done";
+                let btnColor = "#1e272e";
+
+                mapContainer.innerHTML += `
+                    <div class="station-card-vertical" id="station-card-${index}" data-status="${status}">
+                        <div class="big-node-vert"></div>
+                        <h4 style="color: #1e293b; font-size: 18px; margin-top: 5px;">Step ${step.step}: ${step.title}</h4>
+                        <p style="font-size: 14px; color: #64748b; margin: 10px 0;">${step.desc}</p>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button class="btn-light" onclick="openModal('${step.title}', '${formattedGoal} ${step.title}')">Resources</button>
+                            <button class="btn-dark" id="complete-btn-${index}" onclick="toggleStation(event, ${index}, ${totalStations})" style="background: ${btnColor}; flex-grow: 1;">${btnText}</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Flower Sparkle Generator (Cleaned syntax)
+        function createFlowerSparkles(x, y) {
+            for (let i = 0; i < 12; i++) {
+                let sparkle = document.createElement('div');
+                sparkle.className = 'flower-sparkle';
+                document.body.appendChild(sparkle);
+                
+                let angle = (i * 30) * (Math.PI / 180);
+                let distance = 50 + Math.random() * 50;
+                
+                sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                
+                sparkle.style.left = x + 'px';
+                sparkle.style.top = y + 'px';
+                
+                setTimeout(() => sparkle.remove(), 1000);
+            }
+        }
+
+        // TOGGLE LOGIC: Vertical cards ke liye update
+        function toggleStation(event, currentIndex, total) {
+            let currentCard = document.getElementById(`station-card-${currentIndex}`);
+            let currentBtn = document.getElementById(`complete-btn-${currentIndex}`);
+            let currentStatus = currentCard.getAttribute('data-status');
+
+            if(currentStatus === 'completed') {
+                currentCard.setAttribute('data-status', 'inprogress');
+                currentBtn.innerText = "Mark Done";
+                currentBtn.style.background = "#1e272e";
+                
+                let nextCard = document.getElementById(`station-card-${currentIndex + 1}`);
+                if(nextCard && nextCard.getAttribute('data-status') === 'inprogress') {
+                    nextCard.setAttribute('data-status', 'locked');
+                }
+            } else {
+                currentCard.setAttribute('data-status', 'completed');
+                currentBtn.innerText = "Completed ✓";
+                currentBtn.style.background = "#22c55e";
+                
+                createFlowerSparkles(event.clientX, event.clientY);
+
+                let nextCard = document.getElementById(`station-card-${currentIndex + 1}`);
+                if(nextCard && nextCard.getAttribute('data-status') === 'locked') {
+                    nextCard.setAttribute('data-status', 'inprogress');
+                }
+            }
+            let completedCount = document.querySelectorAll('.station-card-vertical[data-status="completed"]').length;
+            document.getElementById('milestoneCounter').innerText = completedCount;
+        }
+
+        // ==== Live Hackathons Timer Function (Math syntax fixed) ====
+        const hackathonsData = [
+            { title: "Global AI Challenge", tags: ["AI/ML", "Grant: $15k"], deadline: new Date(Date.now() + 5*24*60*60*1000).toISOString(), color: "#22c55e", link: "https://devpost.com" },
+            { title: "MLH Global Build", tags: ["Web/Mobile", "Swags"], deadline: new Date(Date.now() + 12*24*60*60*1000).toISOString(), color: "#f97316", link: "https://mlh.io" },
+            { title: "Smart India Hackathon", tags: ["Govt/Tech", "Open"], deadline: new Date(Date.now() + 30*24*60*60*1000).toISOString(), color: "#3b82f6", link: "https://sih.gov.in" }
+        ];
+
+        let timerInterval;
+
+        function renderHackathons() {
+            const container = document.getElementById('hackathonGrid');
+            container.innerHTML = ''; 
+
+            hackathonsData.forEach((hack, index) => {
+                container.innerHTML += `
+                    <div class="glass-card" style="border-top: 5px solid ${hack.color}; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span style="font-size: 12px; font-weight: bold; color: ${hack.color}; background: #f8fafc; padding: 4px 8px; border-radius: 8px;">🔥 Live</span>
+                                <span id="timer-${index}" style="font-size: 13px; font-weight: bold; color: #e11d48;">Loading...</span>
+                            </div>
+                            <h4 style="margin: 0 0 10px 0; color: #1e293b; font-size: 20px;">${hack.title}</h4>
+                            <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                                ${hack.tags.map(tag => `<span style="background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 12px; color: #475569; font-weight: 600;">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                        <a href="${hack.link}" target="_blank" style="text-decoration: none;">
+                            <button class="btn-dark" style="width: 100%; padding: 12px; font-size: 14px;">Apply Now 🚀</button>
+                        </a>
+                    </div>
+                `;
+            });
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                hackathonsData.forEach((hack, index) => {
+                    const now = new Date().getTime();
+                    const distance = new Date(hack.deadline).getTime() - now;
+                    
+                    if (distance > 0) {
+                        const d = Math.floor(distance / (1000 * 60 * 60 * 24));
+                        const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        const s = Math.floor((distance % (1000 * 60)) / 1000);
+                        document.getElementById(`timer-${index}`).innerText = `${d}d ${h}h ${m}m ${s}s`;
+                    } else {
+                        document.getElementById(`timer-${index}`).innerText = "Expired";
+                    }
+                });
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

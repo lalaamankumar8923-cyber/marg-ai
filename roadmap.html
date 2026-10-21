@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marg.ai - Your Metro Journey</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, #fbc2eb 0%, #ffecd2 100%); background-attachment: fixed; margin: 0; padding: 0; color: #2d3436; }
+        .navbar { background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(15px); padding: 15px 40px; border-bottom: 1px solid rgba(255, 255, 255, 0.5); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .navbar h1 { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #ff4757, #ff6b81); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0px 2px 5px rgba(255, 71, 87, 0.3)); }
+        .back-btn { text-decoration: none; color: #2d3436; font-weight: 600; background: rgba(255, 255, 255, 0.6); padding: 10px 20px; border-radius: 8px; transition: 0.3s; border: 1px solid rgba(255, 255, 255, 0.8); }
+        .back-btn:hover { background: rgba(255, 255, 255, 0.9); }
+        
+        .container { max-width: 850px; margin: 40px auto; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(12px); padding: 50px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
+        .page-title { text-align: center; color: #2f3542; margin-bottom: 50px; font-size: 42px; font-weight: 800; letter-spacing: -1px; }
+        .page-title span { background: linear-gradient(135deg, #ff4757, #ff7f50); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .metro-line { position: relative; padding-left: 50px; }
+        .metro-line::before { content: ''; position: absolute; left: 16px; top: 10px; bottom: 10px; width: 8px; background: rgba(255, 255, 255, 0.9); border-radius: 4px; }
+        #moving-train { position: absolute; left: -3px; top: 22px; font-size: 42px; transition: top 0.8s cubic-bezier(0.25, 1, 0.5, 1); z-index: 10; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
+        
+        .station { position: relative; margin-bottom: 40px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); padding: 30px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: all 0.3s ease; }
+        .station:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.9); box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+        .station::before { content: ''; position: absolute; left: -44px; top: 30px; width: 20px; height: 20px; background: rgba(255, 255, 255, 0.9); border: 6px solid #ff7675; border-radius: 50%; z-index: 1; transition: all 0.4s ease; }
+        
+        .station.completed { border-color: #00b894; background: rgba(85, 239, 196, 0.2); }
+        .station.completed::before { border-color: #00b894; background: #00b894; box-shadow: 0 0 15px rgba(0, 184, 148, 0.5); }
+        .station h3 { margin: 0 0 10px 0; color: #2d3436; font-size: 24px; font-weight: 800; }
+        .station p { color: #4a4a4a; line-height: 1.6; margin-bottom: 20px; font-weight: 500; font-size: 16px; }
+        
+        .actions { display: flex; align-items: center; gap: 25px; border-top: 1px solid rgba(255, 255, 255, 0.7); padding-top: 20px; }
+        .yt-btn { background: #ff0000; color: white; padding: 12px 20px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; transition: 0.2s; border: none; }
+        .yt-btn:hover { background: #cc0000; box-shadow: 0 4px 10px rgba(255,0,0,0.3); }
+        .checkbox-container { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #2d3436; cursor: pointer; user-select: none; font-size: 17px; }
+        input[type="checkbox"] { width: 24px; height: 24px; cursor: pointer; accent-color: #00b894; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h1>Marg.ai</h1>
+        <a href="Frontend.html" class="back-btn">⬅ Back</a>
+    </div>
+
+    <div class="container">
+        <h2 class="page-title" id="page-title">Loading Journey...</h2>
+        <div class="metro-line" id="metro-container">
+            <div id="moving-train">🚇</div>
+        </div>
+    </div>
+
+    <script>
+        const rawData = localStorage.getItem('metroRoadmapData');
+        // Safety check 1: Agar data nahi hai ya "undefined" string hai, toh wapas bhej do
+        if (!rawData || rawData === "undefined") {
+            window.location.href = "Frontend.html";
+        } else {
+            try {
+                const roadmapData = JSON.parse(rawData);
+                const cleanGoal = (roadmapData[0] && roadmapData[0].targetRole) ? roadmapData[0].targetRole : localStorage.getItem('userGoal') || "Your Goal";
+                
+                document.getElementById('page-title').innerHTML = `Roadmap to become a <span>${cleanGoal}</span>`;
+                
+                const container = document.getElementById('metro-container');
+                const progressKey = 'margProgress_' + cleanGoal.replace(/\s+/g, '_');
+                
+                // Safety check 2: Progress load karte waqt crash na ho
+                let savedProgress = {};
+                try {
+                    let stored = localStorage.getItem(progressKey);
+                    if (stored && stored !== "undefined") {
+                        savedProgress = JSON.parse(stored);
+                    }
+                } catch(e) {
+                    console.log("Corrupted progress data reset kiya gaya.");
+                }
+
+                roadmapData.forEach((step, index) => {
+                    let stationDiv = document.createElement('div');
+                    let isChecked = savedProgress[index] ? 'checked' : '';
+                    let completedClass = savedProgress[index] ? 'completed' : '';
+                    
+                    stationDiv.className = `station ${completedClass}`;
+                    stationDiv.id = 'station-' + index;
+
+                    let ytLink = "https://www.youtube.com/results?search_query=" + encodeURIComponent(step.ytSearch || step.title);
+
+                    stationDiv.innerHTML = `
+                        <h3>Station ${step.step}: ${step.title}</h3>
+                        <p>${step.desc}</p>
+                        <div class="actions">
+                            <label class="checkbox-container">
+                                <input type="checkbox" class="station-checkbox" onchange="markComplete(${index}, this)" ${isChecked}> Topic Completed
+                            </label>
+                            <a href="${ytLink}" target="_blank" class="yt-btn">▶ Watch Best Tutorials</a>
+                        </div>
+                    `;
+                    container.appendChild(stationDiv);
+                });
+
+                setTimeout(updateTrainPosition, 100);
+
+            } catch (error) {
+                console.error("Data load error:", error);
+                document.getElementById('page-title').innerHTML = `Oops! Error loading data. Please go back and try again.`;
+            }
+        }
+
+        function markComplete(index, checkbox) {
+            let station = document.getElementById('station-' + index);
+            const rawData = localStorage.getItem('metroRoadmapData');
+            const roadmapData = JSON.parse(rawData);
+            const cleanGoal = (roadmapData[0] && roadmapData[0].targetRole) ? roadmapData[0].targetRole : localStorage.getItem('userGoal');
+            const progressKey = 'margProgress_' + cleanGoal.replace(/\s+/g, '_');
+            
+            let savedProgress = {};
+            try {
+                let stored = localStorage.getItem(progressKey);
+                if (stored && stored !== "undefined") {
+                    savedProgress = JSON.parse(stored);
+                }
+            } catch(e) {}
+
+            if (checkbox.checked) {
+                station.classList.add('completed');
+                savedProgress[index] = true;
+                
+                if(typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00b894', '#ff7675', '#0984e3', '#fdcb6e']
+                    });
+                }
+            } else {
+                station.classList.remove('completed');
+                savedProgress[index] = false;
+            }
+            
+            localStorage.setItem(progressKey, JSON.stringify(savedProgress));
+            updateTrainPosition();
+        }
+
+        function updateTrainPosition() {
+            let targetIndex = 0;
+            const checkboxes = document.querySelectorAll('.station-checkbox');
+            
+            for (let i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].checked) {
+                    targetIndex = i + 1; 
+                } else {
+                    break;
+                }
+            }
+
+            const stations = document.querySelectorAll('.station');
+            if (targetIndex >= stations.length) {
+                targetIndex = stations.length - 1;
+            }
+
+            let targetStation = document.getElementById('station-' + targetIndex);
+            if(targetStation) {
+                let train = document.getElementById('moving-train');
+                train.style.top = (targetStation.offsetTop + 15) + 'px';
+            }
+        }
+    </script>
+</body>
+</html>

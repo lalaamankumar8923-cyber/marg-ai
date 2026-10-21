@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marg.ai - Login</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: #fff0f3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .auth-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: #831843;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #ff6b81;
+        }
+
+        .btn-main {
+            width: 100%;
+            padding: 14px;
+            background-color: #831843;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-main:hover {
+            background-color: #ff6b81;
+        }
+
+        .toggle-text {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .toggle-text span {
+            color: #ff6b81;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #signupBox {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <div class="logo">Marg.ai</div>
+
+        <!-- Login Form -->
+        <div id="loginBox">
+            <h2 style="margin-top: 0;">Welcome Back 👋</h2>
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="Enter your email">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter your password">
+            </div>
+            <button class="btn-main" onclick="loginUser()">Log In</button>
+            <div class="toggle-text">Don't have an account? <span onclick="toggleView('signup')">Sign Up</span></div>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signupBox">
+            <h2 style="margin-top: 0;">Create Account 🚀</h2>
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="signupEmail" placeholder="Choose an email">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="signupPassword" placeholder="Create a password">
+            </div>
+            <button class="btn-main" onclick="signupUser()">Sign Up</button>
+            <div class="toggle-text">Already have an account? <span onclick="toggleView('login')">Log In</span></div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle between Login and Signup UI
+        function toggleView(view) {
+            if(view === 'signup') {
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('signupBox').style.display = 'block';
+            } else {
+                document.getElementById('signupBox').style.display = 'none';
+                document.getElementById('loginBox').style.display = 'block';
+            }
+        }
+
+        // SIGNUP FUNCTION
+        async function signupUser() {
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            
+            if(!email || !password) return alert("Bhai, dono fields bharna zaroori hai!");
+
+            try {
+                const response = await fetch('http://localhost:3000/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                if(data.success) {
+                    alert("Account ban gaya! Ab login karo.");
+                    toggleView('login');
+                } else {
+                    alert(data.error);
+                }
+            } catch(error) {
+                alert("Server error! Ensure node server.js is running.");
+            }
+        }
+
+        // LOGIN FUNCTION
+        async function loginUser() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if(!email || !password) return alert("Email aur password dono daalo!");
+
+            try {
+                const response = await fetch('http://localhost:3000/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                if(data.success) {
+                    // Email browser memory mein save karna taaki Frontend.html use kar sake
+                    localStorage.setItem('margUserEmail', data.email);
+                    window.location.href = "Frontend.html"; // Redirect to dashboard
+                } else {
+                    alert(data.error);
+                }
+            } catch(error) {
+                alert("Server error! Ensure node server.js is running.");
+            }
+        }
+    </script>
+</body>
+</html>
