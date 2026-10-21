@@ -6,6 +6,15 @@ const mongoose = require('mongoose');
 
 const ai = new GoogleGenAI({});
 const app = express();
+const path = require('path');
+
+// Frontend ki baaki files (jaise CSS ya dusre HTML pages) ko allow karne ke liye
+app.use(express.static(__dirname));
+
+// Jab koi link khole toh seedha index.html dikhane ke liye
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'Frontend.html'));
+});
 app.use(express.json());
 app.use(cors());
 
